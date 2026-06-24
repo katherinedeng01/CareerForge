@@ -620,11 +620,10 @@ function parsePost() {
 
   const sentences = splitSentences(text);
 
-  // Track extracted product names to avoid duplicates
-  const addedNames = new Set();
+  // Collect raw candidates first, then deduplicate
+  const candidates = []; // { name, cat, note }
 
   for (const sentence of sentences) {
-    // Find which keywords appear in this sentence
     for (const [cat, kwList] of Object.entries(KEYWORDS)) {
       // Sort longer keywords first so "透明质酸精华" matches before "精华"
       const sorted = [...kwList].sort((a, b) => b.length - a.length);
@@ -636,30 +635,30 @@ function parsePost() {
           if (idx === -1) break;
 
           const productName = extractProductName(sentence, idx, idx + kw.length);
-          const key = productName.toLowerCase();
+          const desc = sentence.length > productName.length ? sentence.trim() : '';
 
-          if (!addedNames.has(key)) {
-            addedNames.add(key);
-
-            // Use the original sentence as description, but clean it up
-            const desc = sentence.length > productName.length
-              ? sentence.trim()
-              : '';
-
-            products.push({
-              id: ++idCounter,
-              name: productName,
-              cat,
-              note: desc,
-              checked: false,
-            });
-          }
-
+          candidates.push({ name: productName, cat, note: desc });
           searchFrom = idx + kw.length;
         }
       }
     }
   }
+
+  // Deduplicate: keep the longest name when one is a substring of another.
+  // Sort by name length descending so longer (more specific) names win.
+  candidates.sort((a, b) => b.name.length - a.name.length);
+
+  const kept = [];
+  for (const cand of candidates) {
+    const lc = cand.name.toLowerCase();
+    // Skip if an already-kept name contains this one (this is the shorter duplicate)
+    const dominated = kept.some(k => k.name.toLowerCase().includes(lc));
+    if (!dominated) {
+      kept.push(cand);
+    }
+  }
+
+  products = kept.map(c => ({ id: ++idCounter, name: c.name, cat: c.cat, note: c.note, checked: false }));
 
   // Sort by category order
   const catOrder = ['doc','gear','clothes','beauty','food','other'];
