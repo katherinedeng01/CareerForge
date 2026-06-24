@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>旅行好物清单 ✈️</title>
+  <style>
+    :root {
+      --pink: #ff2d55;
+      --pink-light: #fff0f3;
+      --pink-mid: #ffb3c1;
+      --gray: #6b7280;
+      --gray-light: #f3f4f6;
+      --white: #ffffff;
+      --shadow: 0 2px 12px rgba(255,45,85,0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #fff5f7 0%, #ffeef2 50%, #fff8f0 100%);
+      min-height: 100vh;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 1px solid #ffe0e8;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(255,45,85,0.06);
+    }
+
+    .logo {
+      width: 36px; height: 36px;
+      background: var(--pink);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    header h1 { font-size: 18px; font-weight: 700; color: var(--pink); }
+    header p { font-size: 12px; color: var(--gray); margin-top: 1px; }
+
+    .badge {
+      margin-left: auto;
+      background: var(--pink-light);
+      color: var(--pink);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--pink-mid);
+    }
+
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    /* ── Step card ── */
+    .step-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid #ffe4eb;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .step-num {
+      width: 26px; height: 26px;
+      background: var(--pink);
+      color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step-title { font-size: 15px; font-weight: 600; }
+
+    .hint {
+      font-size: 12px;
+      color: var(--gray);
+      background: var(--gray-light);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .hint b { color: var(--pink); }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 1.5px solid #ffc8d4;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.7;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color .2s;
+      background: #fffbfc;
+      color: #1a1a1a;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--pink);
+      background: var(--white);
+    }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+
+    .btn-primary {
+      background: var(--pink);
+      color: white;
+    }
+    .btn-primary:hover { background: #e0203f; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: var(--pink-light);
+      color: var(--pink);
+      border: 1px solid var(--pink-mid);
+    }
+    .btn-secondary:hover { background: #ffdde6; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--gray);
+      border: 1px solid #e5e7eb;
+    }
+    .btn-ghost:hover { background: var(--gray-light); }
+
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ── Category tabs ── */
+    .category-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .cat-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid #e5e7eb;
+      background: var(--white);
+      color: var(--gray);
+      transition: all .15s;
+    }
+
+    .cat-tab.active {
+      background: var(--pink);
+      color: white;
+      border-color: var(--pink);
+    }
+
+    .cat-tab:hover:not(.active) { border-color: var(--pink-mid); color: var(--pink); }
+
+    .cat-count {
+      display: inline-block;
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      padding: 0 5px;
+      font-size: 11px;
+      margin-left: 3px;
+    }
+
+    /* ── Product list ── */
+    #product-section { display: none; }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .list-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .list-meta { font-size: 12px; color: var(--gray); }
+
+    /* ── Product card ── */
+    .product-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      border: 1.5px solid transparent;
+      transition: border-color .2s, box-shadow .2s;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .product-card:hover { box-shadow: 0 4px 20px rgba(255,45,85,0.12); }
+
+    .product-card.checked {
+      border-color: #34c759;
+      background: #f0fff4;
+    }
+
+    .product-card.hidden { display: none; }
+
+    .card-check {
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .card-check input[type=checkbox] {
+      width: 18px; height: 18px;
+      accent-color: #34c759;
+      cursor: pointer;
+    }
+
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-name {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-name[contenteditable="true"] {
+      border-bottom: 1.5px dashed var(--pink-mid);
+      outline: none;
+      padding-bottom: 1px;
+    }
+
+    .card-name[contenteditable="true"]:focus {
+      border-bottom-color: var(--pink);
+    }
+
+    .cat-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .card-note {
+      font-size: 13px;
+      color: var(--gray);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .card-note[contenteditable="true"] {
+      border-bottom: 1.5px dashed #e5e7eb;
+      outline: none;
+      min-height: 18px;
+    }
+
+    .card-note[contenteditable="true"]:focus {
+      border-bottom-color: var(--pink-mid);
+    }
+
+    .card-note.placeholder { color: #c0c4cc; font-style: italic; }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: transparent;
+      cursor: pointer;
+      color: var(--gray);
+      transition: all .12s;
+    }
+
+    .action-btn:hover { background: var(--gray-light); }
+    .action-btn.delete:hover { background: #fff0f0; color: #e53e3e; border-color: #fca5a5; }
+
+    .add-btn-wrap {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── Empty / loading states ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Export card ── */
+    #export-section {
+      display: none;
+    }
+
+    .export-preview {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 13px;
+      color: #333;
+      white-space: pre-wrap;
+      line-height: 1.8;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 12px;
+    }
+
+    /* ── Category colors ── */
+    .c-clothes { background: #fff3cd; color: #b45309; }
+    .c-beauty  { background: #fce7f3; color: #9d174d; }
+    .c-food    { background: #d1fae5; color: #065f46; }
+    .c-gear    { background: #dbeafe; color: #1e40af; }
+    .c-doc     { background: #ede9fe; color: #5b21b6; }
+    .c-other   { background: #f3f4f6; color: #374151; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a1a;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all .3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      main { padding: 16px 12px 60px; }
+      .step-card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🗺️</div>
+  <div>
+    <h1>旅行好物清单</h1>
+    <p>小红书帖子 → 一键生成购物清单</p>
+  </div>
+  <span class="badge">无需登录</span>
+</header>
+
+<main>
+
+  <!-- Step 1 -->
+  <div class="step-card">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">粘贴小红书帖子内容</div>
+    </div>
+    <div class="hint">
+      📋 <b>操作步骤：</b>打开小红书 App → 找到旅行攻略帖 → 点击「复制链接」或直接长按复制正文 → 粘贴到下方文本框<br>
+      💡 粘贴<b>帖子正文内容</b>识别效果最佳，支持识别商品、装备、美食、证件等
+    </div>
+    <textarea id="post-input" placeholder="在这里粘贴小红书帖子正文...
+
+例如：
+去日本旅游必备！防晒霜、墨镜、便携雨伞一定要带。护照、签证、机票打印好。药妆店必买：资生堂防晒、雪肌精面膜..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="parsePost()">✨ 智能识别商品</button>
+      <button class="btn btn-secondary" onclick="loadDemo()">🎯 试用示例</button>
+      <button class="btn btn-ghost" onclick="clearInput()">清空</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Product List -->
+  <div id="product-section">
+    <div class="step-card" style="padding-bottom:12px">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">编辑你的旅行清单</div>
+      </div>
+
+      <div class="category-bar" id="cat-bar">
+        <div class="cat-tab active" data-cat="all" onclick="filterCat('all',this)">
+          全部 <span class="cat-count" id="cnt-all">0</span>
+        </div>
+        <div class="cat-tab" data-cat="clothes" onclick="filterCat('clothes',this)">👗 服装 <span class="cat-count" id="cnt-clothes">0</span></div>
+        <div class="cat-tab" data-cat="beauty" onclick="filterCat('beauty',this)">💄 美妆护肤 <span class="cat-count" id="cnt-beauty">0</span></div>
+        <div class="cat-tab" data-cat="food" onclick="filterCat('food',this)">🍜 零食美食 <span class="cat-count" id="cnt-food">0</span></div>
+        <div class="cat-tab" data-cat="gear" onclick="filterCat('gear',this)">🎒 装备工具 <span class="cat-count" id="cnt-gear">0</span></div>
+        <div class="cat-tab" data-cat="doc" onclick="filterCat('doc',this)">📄 证件票务 <span class="cat-count" id="cnt-doc">0</span></div>
+        <div class="cat-tab" data-cat="other" onclick="filterCat('other',this)">📦 其他 <span class="cat-count" id="cnt-other">0</span></div>
+      </div>
+
+      <div class="list-header">
+        <div>
+          <div class="list-title">商品清单</div>
+          <div class="list-meta" id="list-meta">共 0 件商品</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="checkAll()">全部勾选</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="uncheckAll()">取消勾选</button>
+        </div>
+      </div>
+
+      <div id="product-list"></div>
+
+      <div class="add-btn-wrap">
+        <button class="btn btn-secondary" onclick="addItem()">+ 手动添加商品</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Export -->
+    <div class="step-card" id="export-section">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">导出清单</div>
+      </div>
+      <div class="export-preview" id="export-preview"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="copyList()">📋 复制文字清单</button>
+        <button class="btn btn-secondary" onclick="printList()">🖨️ 打印 / 保存PDF</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Category config ──
+const CATS = {
+  clothes: { label: '服装配饰', emoji: '👗', cls: 'c-clothes' },
+  beauty:  { label: '美妆护肤', emoji: '💄', cls: 'c-beauty' },
+  food:    { label: '零食美食', emoji: '🍜', cls: 'c-food' },
+  gear:    { label: '装备工具', emoji: '🎒', cls: 'c-gear' },
+  doc:     { label: '证件票务', emoji: '📄', cls: 'c-doc' },
+  other:   { label: '其他好物', emoji: '📦', cls: 'c-other' },
+};
+
+// ── Keyword dictionary ──
+const KEYWORDS = {
+  clothes: [
+    '防晒衣','速干衣','冲锋衣','羽绒服','外套','夹克','卫衣','T恤','衬衫','连衣裙','裙子',
+    '牛仔裤','运动裤','短裤','泳衣','比基尼','内衣','袜子','保暖内衣','保暖裤','帽子',
+    '墨镜','太阳镜','围巾','手套','腰包','背包','双肩包','行李箱','拉杆箱','帆布包',
+    '托特包','挎包','运动鞋','登山鞋','沙滩鞋','凉鞋','拖鞋','跑鞋','帆布鞋','靴子',
+    '防水袋','行李带','收纳袋','压缩袋','行李牌',
+  ],
+  beauty: [
+    '防晒霜','防晒喷雾','隔离霜','BB霜','CC霜','粉底','散粉','口红','唇膏','唇釉',
+    '眼影','眼线','睫毛膏','腮红','高光','修容','卸妆','洁面','洗面奶','爽肤水',
+    '精华','乳液','面霜','眼霜','面膜','护手霜','身体乳','沐浴露','洗发水','护发素',
+    '发膜','防脱发','香水','香氛','止汗露','驱蚊液','驱蚊喷雾','晒后修复','芦荟胶',
+    '保湿喷雾','补水喷雾','美白','祛斑','资生堂','雪肌精','SK2','科颜氏','安热沙',
+  ],
+  food: [
+    '零食','小吃','特产','伴手礼','饼干','薯片','糖果','巧克力','方便面','泡面','自热锅',
+    '牛肉干','果冻','软糖','坚果','花生','腰果','巧克力','奶酪','芝士','蛋糕',
+    '面包','能量棒','蛋白棒','咖啡','茶包','奶粉','奶茶','饮料','矿泉水',
+    '压缩饼干','户外食品','代餐','冻干','泡茶','便携餐具',
+  ],
+  gear: [
+    '充电宝','移动电源','数据线','充电器','转换插头','万能插头','插座','耳机','蓝牙耳机',
+    '相机','单反','微单','镜头','三脚架','自拍杆','GoPro','运动相机','手机支架',
+    '防水袋','防水手机壳','手机壳','颈枕','U型枕','眼罩','耳塞','降噪耳机',
+    '便携雨伞','折叠伞','雨衣','登山杖','头灯','手电筒','多功能刀','瑞士军刀',
+    '水杯','保温杯','折叠杯','折叠碗','餐具套装','便携洗漱包','分装瓶','小样瓶',
+    '药品','感冒药','止泻药','晕车药','创可贴','医用酒精','消毒湿巾','蚊不叮',
+    'WiFi蛋','随身WiFi','SIM卡','翻译机','电子词典','降压包',
+  ],
+  doc: [
+    '护照','签证','机票','船票','火车票','门票','景区票','酒店','民宿','住宿',
+    '保险','旅游保险','行程单','行程表','攻略','地图','驾照','国际驾照',
+    '银行卡','信用卡','现金','外币','换汇','电话卡','流量卡',
+  ],
+};
+
+let products = [];
+let currentCat = 'all';
+let idCounter = 0;
+
+// ── Demo content ──
+function loadDemo() {
+  document.getElementById('post-input').value = `🗾 日本东京5天4夜超全攻略！必买必带清单整理！
+
+📦【行李清单】
+防晒衣和墨镜一定要带！日本夏天紫外线超强，安热沙防晒霜必须买！
+速干衣2-3件就够了，在优衣库还可以再买～
+运动鞋最重要，每天走1-2万步，穿错鞋真的会废！
+行李箱选20寸的就好，不用托运节省时间
+
+🌸【药妆店必买】
+资生堂洗颜泡沫、雪肌精化妆水真的好用！
+面膜要买花王的，价格超划算
+驱蚊液必备，日本蚊子超多
+护手霜买ATRIX的，随手买一堆送人
+
+📱【电子必备】
+充电宝一定记得带，5000mAh够用了
+转换插头！日本是两孔扁头，国内插头用不了
+相机或手机拍照，三脚架和自拍杆选一个带
+
+🍱【必吃必买特产】
+东京香蕉蛋糕是伴手礼首选！
+白色恋人饼干要在机场买
+零食控可以去唐吉诃德，薯片饼干超多又便宜
+
+📄【重要证件】
+护照提前检查有效期，至少6个月以上！
+签证打印纸质版备用
+机票住宿确认单打印好
+日元换汇出发前在网上预约更划算`;
+  parsePost();
+}
+
+function clearInput() {
+  document.getElementById('post-input').value = '';
+  document.getElementById('product-section').style.display = 'none';
+}
+
+// ── Main parse function ──
+function parsePost() {
+  const text = document.getElementById('post-input').value.trim();
+  if (!text) { showToast('请先粘贴小红书帖子内容'); return; }
+
+  products = [];
+  idCounter = 0;
+
+  const found = new Set();
+
+  for (const [cat, kwList] of Object.entries(KEYWORDS)) {
+    for (const kw of kwList) {
+      // Check if keyword appears in text
+      const regex = new RegExp(kw, 'g');
+      if (regex.test(text) && !found.has(kw)) {
+        found.add(kw);
+        // Extract context (up to 40 chars around keyword)
+        const idx = text.indexOf(kw);
+        const start = Math.max(0, idx - 20);
+        const end = Math.min(text.length, idx + kw.length + 30);
+        const snippet = text.slice(start, end).replace(/[\n\r]/g, ' ').trim();
+
+        products.push({
+          id: ++idCounter,
+          name: kw,
+          cat,
+          note: snippet !== kw ? snippet : '',
+          checked: false,
+        });
+      }
+    }
+  }
+
+  // Sort by category order
+  const catOrder = ['doc','gear','clothes','beauty','food','other'];
+  products.sort((a, b) => catOrder.indexOf(a.cat) - catOrder.indexOf(b.cat));
+
+  if (products.length === 0) {
+    showToast('未识别到商品，建议粘贴更详细的帖子正文');
+    return;
+  }
+
+  renderAll();
+  document.getElementById('product-section').style.display = 'block';
+  document.getElementById('export-section').style.display = 'block';
+  document.querySelector('#product-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showToast(`识别到 ${products.length} 件好物 ✨`);
+}
+
+// ── Render ──
+function renderAll() {
+  updateCounts();
+  renderList();
+  renderExport();
+}
+
+function updateCounts() {
+  const all = products.length;
+  document.getElementById('cnt-all').textContent = all;
+  for (const cat of Object.keys(CATS)) {
+    document.getElementById('cnt-' + cat).textContent =
+      products.filter(p => p.cat === cat).length;
+  }
+  const checked = products.filter(p => p.checked).length;
+  document.getElementById('list-meta').textContent =
+    `共 ${all} 件商品${checked > 0 ? `，已勾选 ${checked} 件` : ''}`;
+}
+
+function renderList() {
+  const container = document.getElementById('product-list');
+  const filtered = currentCat === 'all' ? products : products.filter(p => p.cat === currentCat);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>该分类暂无商品</p></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const cat = CATS[p.cat];
+    return `
+    <div class="product-card${p.checked ? ' checked' : ''}" id="card-${p.id}">
+      <div class="card-check">
+        <input type="checkbox" ${p.checked ? 'checked' : ''} onchange="toggleCheck(${p.id},this.checked)" title="标记为已备好">
+      </div>
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-name" contenteditable="true"
+            onblur="updateName(${p.id},this.textContent)"
+          >${escHtml(p.name)}</div>
+          <span class="cat-tag ${cat.cls}">${cat.emoji} ${cat.label}</span>
+        </div>
+        <div class="card-note ${p.note ? '' : 'placeholder'}"
+          contenteditable="true"
+          data-placeholder="添加备注..."
+          onblur="updateNote(${p.id},this.textContent)"
+          onfocus="clearPlaceholder(this)"
+        >${p.note ? escHtml(p.note) : '添加备注...'}</div>
+        <div class="card-actions">
+          <select class="action-btn" onchange="changeCat(${p.id},this.value)" title="更改分类">
+            ${Object.entries(CATS).map(([k,v]) =>
+              `<option value="${k}" ${p.cat===k?'selected':''}>${v.emoji} ${v.label}</option>`
+            ).join('')}
+          </select>
+          <button class="action-btn delete" onclick="deleteItem(${p.id})">🗑 删除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderExport() {
+  const lines = [];
+  const catGroups = {};
+  for (const p of products) {
+    if (!catGroups[p.cat]) catGroups[p.cat] = [];
+    catGroups[p.cat].push(p);
+  }
+  for (const [cat, items] of Object.entries(catGroups)) {
+    if (!items.length) continue;
+    const c = CATS[cat];
+    lines.push(`${c.emoji} ${c.label}`);
+    for (const p of items) {
+      lines.push(`  ${p.checked ? '✅' : '⬜'} ${p.name}`);
+    }
+    lines.push('');
+  }
+  document.getElementById('export-preview').textContent = lines.join('\n');
+}
+
+// ── Actions ──
+function toggleCheck(id, val) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  p.checked = val;
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('checked', val);
+  updateCounts();
+  renderExport();
+}
+
+function updateName(id, val) {
+  const p = products.find(x => x.id === id);
+  if (p) { p.name = val.trim(); renderExport(); }
+}
+
+function updateNote(id, val) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const isEmpty = val.trim() === '' || val.trim() === '添加备注...';
+  p.note = isEmpty ? '' : val.trim();
+  renderExport();
+}
+
+function clearPlaceholder(el) {
+  if (el.classList.contains('placeholder')) {
+    el.textContent = '';
+    el.classList.remove('placeholder');
+  }
+}
+
+function changeCat(id, newCat) {
+  const p = products.find(x => x.id === id);
+  if (p) { p.cat = newCat; renderAll(); }
+}
+
+function deleteItem(id) {
+  products = products.filter(x => x.id !== id);
+  renderAll();
+}
+
+function addItem() {
+  const cat = currentCat === 'all' ? 'other' : currentCat;
+  products.push({ id: ++idCounter, name: '新商品', cat, note: '', checked: false });
+  renderAll();
+  // Focus the new card name
+  setTimeout(() => {
+    const last = document.querySelectorAll('.card-name');
+    if (last.length) {
+      const el = last[last.length - 1];
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    }
+  }, 50);
+}
+
+function filterCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function checkAll() {
+  products.forEach(p => p.checked = true);
+  renderAll();
+}
+
+function uncheckAll() {
+  products.forEach(p => p.checked = false);
+  renderAll();
+}
+
+function copyList() {
+  const text = document.getElementById('export-preview').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('清单已复制到剪贴板 ✅'));
+}
+
+function printList() {
+  window.print();
+}
+
+// ── Helpers ──
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+
+</body>
+</html>
