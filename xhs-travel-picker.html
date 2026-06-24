@@ -544,16 +544,18 @@ function loadDemo() {
   document.getElementById('post-input').value = `🗾 日本东京5天4夜超全攻略！必买必带清单整理！
 
 📦【行李清单】
-防晒衣和墨镜一定要带！日本夏天紫外线超强，安热沙防晒霜必须买！
+防晒衣和墨镜一定要带！日本夏天紫外线超强，安热沙防晒霜SPF50+必须买！
 速干衣2-3件就够了，在优衣库还可以再买～
 运动鞋最重要，每天走1-2万步，穿错鞋真的会废！
 行李箱选20寸的就好，不用托运节省时间
 
-🌸【药妆店必买】
-资生堂洗颜泡沫、雪肌精化妆水真的好用！
-面膜要买花王的，价格超划算
+🌸【药妆店必买精华TOP3】
+Anua PDRN透明质酸精华是今年大爆款，修护效果超好！
+Medicube PDRN精华胶原蛋白感满分，闺蜜用完都回购了
+wellage玻尿酸精华性价比之王，一瓶顶很多大牌！
+资生堂洗颜泡沫、雪肌精化妆水也一定要带回来
+花王面膜价格超划算，买两大盒刚刚好
 驱蚊液必备，日本蚊子超多
-护手霜买ATRIX的，随手买一堆送人
 
 📱【电子必备】
 充电宝一定记得带，5000mAh够用了
@@ -579,6 +581,36 @@ function clearInput() {
 }
 
 // ── Main parse function ──
+
+// Split text into clean sentences (by Chinese/English punctuation and newlines)
+function splitSentences(text) {
+  return text
+    .split(/[\n\r]+/)
+    .flatMap(line => line.split(/[，。！？；：,!?;]/))
+    .map(s => s.replace(/^[\s\-·•\*#>「」【】（）()\[\]]+|[\s\-·•\*#>「」【】（）()\[\]]+$/g, '').trim())
+    .filter(s => s.length > 0);
+}
+
+// Given a sentence and the position of a keyword, expand outward to grab the
+// full product name (including brand prefix and product suffix).
+// Stops at spaces, commas, brackets, and other natural delimiters.
+const STOP_CHARS = /[\s，。！？；：,!?;「」【】（）()\[\]、\/\\]/;
+
+function extractProductName(sentence, kwStart, kwEnd) {
+  let s = kwStart;
+  let e = kwEnd;
+
+  // Expand left (pick up brand / qualifier before keyword)
+  while (s > 0 && !STOP_CHARS.test(sentence[s - 1])) s--;
+
+  // Expand right (pick up suffixes like "精华液", "套装" etc.)
+  while (e < sentence.length && !STOP_CHARS.test(sentence[e])) e++;
+
+  const name = sentence.slice(s, e).trim();
+  // Discard if the result is too long (likely grabbed a full sentence fragment)
+  return name.length <= 30 ? name : sentence.slice(kwStart, kwEnd);
+}
+
 function parsePost() {
   const text = document.getElementById('post-input').value.trim();
   if (!text) { showToast('请先粘贴小红书帖子内容'); return; }
@@ -586,27 +618,45 @@ function parsePost() {
   products = [];
   idCounter = 0;
 
-  const found = new Set();
+  const sentences = splitSentences(text);
 
-  for (const [cat, kwList] of Object.entries(KEYWORDS)) {
-    for (const kw of kwList) {
-      // Check if keyword appears in text
-      const regex = new RegExp(kw, 'g');
-      if (regex.test(text) && !found.has(kw)) {
-        found.add(kw);
-        // Extract context (up to 40 chars around keyword)
-        const idx = text.indexOf(kw);
-        const start = Math.max(0, idx - 20);
-        const end = Math.min(text.length, idx + kw.length + 30);
-        const snippet = text.slice(start, end).replace(/[\n\r]/g, ' ').trim();
+  // Track extracted product names to avoid duplicates
+  const addedNames = new Set();
 
-        products.push({
-          id: ++idCounter,
-          name: kw,
-          cat,
-          note: snippet !== kw ? snippet : '',
-          checked: false,
-        });
+  for (const sentence of sentences) {
+    // Find which keywords appear in this sentence
+    for (const [cat, kwList] of Object.entries(KEYWORDS)) {
+      // Sort longer keywords first so "透明质酸精华" matches before "精华"
+      const sorted = [...kwList].sort((a, b) => b.length - a.length);
+
+      for (const kw of sorted) {
+        let searchFrom = 0;
+        while (true) {
+          const idx = sentence.indexOf(kw, searchFrom);
+          if (idx === -1) break;
+
+          const productName = extractProductName(sentence, idx, idx + kw.length);
+          const key = productName.toLowerCase();
+
+          if (!addedNames.has(key)) {
+            addedNames.add(key);
+
+            // Use the original sentence as description, but clean it up
+            const desc = sentence.length > productName.length
+              ? sentence.trim()
+              : '';
+
+            products.push({
+              id: ++idCounter,
+              name: productName,
+              cat,
+              note: desc,
+              checked: false,
+            });
+          }
+
+          searchFrom = idx + kw.length;
+        }
       }
     }
   }
