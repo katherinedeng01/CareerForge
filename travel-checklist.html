@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>旅游打卡清单</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: linear-gradient(135deg, #fff1f2 0%, #fff7ed 100%); min-height: 100vh; }
+  .container { max-width: 640px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 24px; }
+  .header .emoji { font-size: 40px; margin-bottom: 8px; }
+  .trip-name { font-size: 22px; font-weight: 700; color: #1f2937;
+               border: none; border-bottom: 2px dashed #fca5a5; background: transparent;
+               text-align: center; outline: none; width: 100%; max-width: 280px; padding-bottom: 4px; }
+  .trip-name:focus { border-bottom-color: #f43f5e; }
+  .subtitle { font-size: 13px; color: #9ca3af; margin-top: 6px; }
+
+  /* API key banner */
+  .api-banner { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 12px;
+                padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #92400e; }
+  .api-banner input { margin-top: 8px; width: 100%; border: 1px solid #fcd34d; border-radius: 8px;
+                      padding: 8px 10px; font-size: 13px; outline: none; background: #fffbeb; }
+  .api-banner input:focus { border-color: #f59e0b; }
+
+  /* Parse box */
+  .parse-box { background: #fff; border-radius: 16px; border: 1px solid #ffe4e6; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .parse-header { display: flex; justify-content: space-between; align-items: center;
+                  padding: 14px 18px; cursor: pointer; user-select: none; }
+  .parse-header-left { font-size: 14px; font-weight: 500; color: #374151; display: flex; align-items: center; gap: 8px; }
+  .parse-toggle { font-size: 12px; color: #9ca3af; }
+  .parse-body { padding: 0 18px 18px; border-top: 1px solid #f9fafb; }
+  .parse-textarea { width: 100%; margin-top: 12px; padding: 12px; font-size: 13px; color: #374151;
+                    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px;
+                    resize: none; height: 140px; outline: none; font-family: inherit; line-height: 1.6; }
+  .parse-textarea:focus { border-color: #fca5a5; }
+  .parse-btn { margin-top: 10px; width: 100%; padding: 12px; background: #f43f5e;
+               color: #fff; font-size: 14px; font-weight: 500; border: none; border-radius: 12px;
+               cursor: pointer; transition: background .15s; }
+  .parse-btn:hover:not(:disabled) { background: #e11d48; }
+  .parse-btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+  /* Error */
+  .error { margin-top: 10px; padding: 10px 14px; background: #fef2f2;
+           border: 1px solid #fecaca; border-radius: 10px; font-size: 13px; color: #dc2626; }
+
+  /* Summary */
+  .summary { background: #fff; border-radius: 16px; border: 1px solid #ffe4e6;
+             padding: 16px; margin-top: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .summary-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .summary-label { font-size: 13px; font-weight: 500; color: #374151; }
+  .summary-count { font-size: 13px; font-weight: 700; color: #f43f5e; }
+  .progress-bar { background: #f3f4f6; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #fb7185, #fb923c);
+                   transition: width .4s ease; }
+  .summary-stats { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: #6b7280; }
+  .summary-stats strong { color: #374151; }
+
+  /* Category group */
+  .cat-group { margin-top: 24px; }
+  .cat-title { font-size: 12px; font-weight: 600; color: #9ca3af; letter-spacing: .06em;
+               text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .cat-count { color: #d1d5db; }
+
+  /* Item card */
+  .item-card { background: #fff; border: 1px solid #f3f4f6; border-radius: 12px;
+               padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start;
+               gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.04); transition: opacity .2s; }
+  .item-card.skipped { opacity: .45; }
+  .status-btn { flex-shrink: 0; font-size: 11px; padding: 3px 9px; border-radius: 99px;
+                border: none; cursor: pointer; font-weight: 500; transition: all .15s; margin-top: 2px; }
+  .status-想去 { background: #dbeafe; color: #2563eb; }
+  .status-已去 { background: #dcfce7; color: #16a34a; }
+  .status-跳过 { background: #f3f4f6; color: #9ca3af; }
+  .item-body { flex: 1; min-width: 0; }
+  .item-name { font-size: 14px; font-weight: 500; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-meta { display: flex; gap: 8px; margin-top: 4px; font-size: 12px; }
+  .item-price { color: #f97316; }
+  .item-notes { color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px;
+              opacity: .4; transition: opacity .15s; border-radius: 6px; }
+  .icon-btn:hover { opacity: 1; background: #f9fafb; }
+
+  /* Edit card */
+  .edit-card { background: #fff; border: 2px solid #fca5a5; border-radius: 12px;
+               padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(244,63,94,.1); }
+  .edit-field { width: 100%; border: none; border-bottom: 1px solid #e5e7eb; font-size: 14px;
+                font-weight: 500; color: #1f2937; outline: none; padding-bottom: 4px;
+                background: transparent; font-family: inherit; margin-bottom: 10px; }
+  .edit-field:focus { border-bottom-color: #f43f5e; }
+  .edit-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .edit-select { font-size: 12px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 8px;
+                 outline: none; background: #fff; font-family: inherit; cursor: pointer; }
+  .edit-select:focus { border-color: #fca5a5; }
+  .edit-input { flex: 1; font-size: 12px; border: 1px solid #e5e7eb; border-radius: 8px;
+                padding: 6px 10px; outline: none; font-family: inherit; }
+  .edit-input:focus { border-color: #fca5a5; }
+  .edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+  .btn-cancel { font-size: 12px; padding: 6px 14px; border: 1px solid #e5e7eb; border-radius: 8px;
+                background: #fff; color: #6b7280; cursor: pointer; }
+  .btn-save { font-size: 12px; padding: 6px 14px; border: none; border-radius: 8px;
+              background: #f43f5e; color: #fff; cursor: pointer; font-weight: 500; }
+  .btn-save:hover { background: #e11d48; }
+
+  /* Add button */
+  .add-btn { margin-top: 16px; width: 100%; padding: 12px; border: 2px dashed #fca5a5;
+             background: transparent; border-radius: 14px; color: #fb7185; font-size: 13px;
+             font-weight: 500; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .add-btn:hover { border-color: #f43f5e; color: #f43f5e; background: #fff1f2; }
+
+  /* Empty */
+  .empty { text-align: center; margin-top: 48px; color: #9ca3af; }
+  .empty .map { font-size: 56px; margin-bottom: 12px; }
+  .empty p { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="emoji">✈️</div>
+    <input class="trip-name" id="tripName" value="我的旅行清单" />
+    <p class="subtitle">粘贴小红书攻略，一键生成打卡清单</p>
+  </div>
+
+  <!-- API Key -->
+  <div class="api-banner">
+    🔑 请输入你的 <strong>Anthropic API Key</strong>（仅在本地使用，不会上传）
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+  </div>
+
+  <!-- Parse box -->
+  <div class="parse-box">
+    <div class="parse-header" onclick="toggleParse()">
+      <span class="parse-header-left">📋 粘贴小红书帖子内容</span>
+      <span class="parse-toggle" id="parseToggleIcon">▲</span>
+    </div>
+    <div class="parse-body" id="parseBody">
+      <textarea class="parse-textarea" id="parseText"
+        placeholder="把小红书帖子的文字内容粘贴到这里...&#10;&#10;例如：&#10;📍 大阪三天两夜攻略&#10;第一天：道顿堀 → 心斋桥 → 黑门市场&#10;美食推荐：一兰拉面（约¥80），章鱼烧（¥50）&#10;住宿：心斋桥商业区酒店（约¥400/晚）"
+      ></textarea>
+      <button class="parse-btn" id="parseBtn" onclick="handleParse()">✨ 一键生成清单</button>
+      <div class="error" id="errorBox" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div id="summarySection" style="display:none" class="summary">
+    <div class="summary-top">
+      <span class="summary-label">打卡进度</span>
+      <span class="summary-count" id="summaryCount">0/0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="summary-stats" id="summaryStats"></div>
+  </div>
+
+  <!-- Items -->
+  <div id="itemsContainer"></div>
+
+  <!-- Add button -->
+  <button class="add-btn" id="addBtn" style="display:none" onclick="addItem()">+ 手动添加项目</button>
+
+  <!-- Empty state -->
+  <div class="empty" id="emptyState">
+    <div class="map">🗺️</div>
+    <p>粘贴小红书帖子文字，开始规划你的旅行</p>
+  </div>
+
+</div>
+
+<script>
+const CATEGORIES = ["景点", "美食", "住宿", "购物", "交通", "其他"];
+const CAT_ICONS = { 景点:"🏛️", 美食:"🍜", 住宿:"🏨", 购物:"🛍️", 交通:"🚇", 其他:"📌" };
+const STATUS_NEXT = { 想去:"已去", 已去:"跳过", 跳过:"想去" };
+const STATUS_LABEL = { 想去:"想去", 已去:"✓ 已去", 跳过:"跳过" };
+
+let items = [];
+let parseOpen = true;
+
+function toggleParse() {
+  parseOpen = !parseOpen;
+  document.getElementById("parseBody").style.display = parseOpen ? "block" : "none";
+  document.getElementById("parseToggleIcon").textContent = parseOpen ? "▲" : "▼";
+}
+
+async function handleParse() {
+  const apiKey = document.getElementById("apiKey").value.trim();
+  const text = document.getElementById("parseText").value.trim();
+  const errBox = document.getElementById("errorBox");
+  errBox.style.display = "none";
+
+  if (!apiKey) { showError("请先填写 Anthropic API Key"); return; }
+  if (!text) { showError("请粘贴帖子内容"); return; }
+
+  const btn = document.getElementById("parseBtn");
+  btn.disabled = true;
+  btn.textContent = "AI 解析中...";
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2048,
+        messages: [{
+          role: "user",
+          content: `你是一个旅游攻略解析助手。请从以下小红书帖子文本中提取所有提到的旅游相关项目（景点、餐厅、住宿、购物地点、交通方式等），返回 JSON 数组。
+
+每个项目包含：
+- name: 名称（字符串）
+- category: 类别，只能是以下之一："景点"、"美食"、"住宿"、"购物"、"交通"、"其他"
+- price: 价格或预算（字符串，如"免费"、"约50元"、"100-200元"，没有提到则填"未知"）
+- notes: 备注，从帖子中提取的相关描述（简短，不超过30字）
+
+只返回 JSON 数组，不要其他内容。
+
+帖子内容：
+${text}`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || "API 请求失败");
+
+    const content = data.content[0].text;
+    const match = content.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("解析结果格式异常");
+
+    const parsed = JSON.parse(match[0]);
+    const newItems = parsed.map((item, i) => ({
+      ...item,
+      id: `item-${Date.now()}-${i}`,
+      status: "想去",
+      editing: false
+    }));
+
+    items = [...items, ...newItems];
+    document.getElementById("parseText").value = "";
+    toggleParse();
+    render();
+  } catch(e) {
+    showError(e.message || "解析失败，请重试");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✨ 一键生成清单";
+  }
+}
+
+function showError(msg) {
+  const box = document.getElementById("errorBox");
+  box.textContent = msg;
+  box.style.display = "block";
+}
+
+function addItem() {
+  items.push({ id: `item-${Date.now()}`, name: "新项目", category: "其他",
+               price: "未知", notes: "", status: "想去", editing: true });
+  render();
+}
+
+function cycleStatus(id) {
+  const item = items.find(i => i.id === id);
+  if (item) { item.status = STATUS_NEXT[item.status]; render(); }
+}
+
+function startEdit(id) {
+  items.forEach(i => i.editing = false);
+  const item = items.find(i => i.id === id);
+  if (item) { item.editing = true; render(); }
+}
+
+function saveEdit(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.name = document.getElementById(`name-${id}`).value || item.name;
+  item.category = document.getElementById(`cat-${id}`).value;
+  item.price = document.getElementById(`price-${id}`).value || "未知";
+  item.notes = document.getElementById(`notes-${id}`).value;
+  item.editing = false;
+  render();
+}
+
+function cancelEdit(id) {
+  const item = items.find(i => i.id === id);
+  if (item) { item.editing = false; render(); }
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  render();
+}
+
+function render() {
+  const container = document.getElementById("itemsContainer");
+  const summary = document.getElementById("summarySection");
+  const addBtn = document.getElementById("addBtn");
+  const empty = document.getElementById("emptyState");
+
+  if (items.length === 0) {
+    container.innerHTML = "";
+    summary.style.display = "none";
+    addBtn.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+
+  empty.style.display = "none";
+  addBtn.style.display = "block";
+
+  // Summary
+  const visited = items.filter(i => i.status === "已去").length;
+  const wantTo = items.filter(i => i.status === "想去").length;
+  const total = items.length;
+  const pct = Math.round(visited / total * 100);
+  summary.style.display = "block";
+  document.getElementById("summaryCount").textContent = `${visited}/${total}`;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("summaryStats").innerHTML =
+    `<span>🎯 想去 <strong>${wantTo}</strong></span>
+     <span>✅ 已去 <strong style="color:#16a34a">${visited}</strong></span>
+     <span>📍 共 <strong>${total}</strong> 个</span>`;
+
+  // Group by category
+  let html = "";
+  CATEGORIES.forEach(cat => {
+    const catItems = items.filter(i => i.category === cat);
+    if (!catItems.length) return;
+    html += `<div class="cat-group">
+      <div class="cat-title">${CAT_ICONS[cat]} ${cat} <span class="cat-count">(${catItems.length})</span></div>`;
+    catItems.forEach(item => {
+      if (item.editing) {
+        html += editCard(item);
+      } else {
+        html += itemCard(item);
+      }
+    });
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function itemCard(item) {
+  const skipped = item.status === "跳过" ? " skipped" : "";
+  const priceHtml = item.price && item.price !== "未知"
+    ? `<span class="item-price">${esc(item.price)}</span>` : "";
+  const notesHtml = item.notes
+    ? `<span class="item-notes">${esc(item.notes)}</span>` : "";
+  return `
+    <div class="item-card${skipped}">
+      <button class="status-btn status-${item.status}" onclick="cycleStatus('${item.id}')">
+        ${STATUS_LABEL[item.status]}
+      </button>
+      <div class="item-body">
+        <div class="item-name">${esc(item.name)}</div>
+        <div class="item-meta">${priceHtml}${notesHtml}</div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn" title="编辑" onclick="startEdit('${item.id}')">✏️</button>
+        <button class="icon-btn" title="删除" onclick="deleteItem('${item.id}')">🗑️</button>
+      </div>
+    </div>`;
+}
+
+function editCard(item) {
+  const catOptions = CATEGORIES.map(c =>
+    `<option value="${c}"${c === item.category ? " selected" : ""}>${c}</option>`).join("");
+  return `
+    <div class="edit-card">
+      <input class="edit-field" id="name-${item.id}" value="${esc(item.name)}" placeholder="名称" />
+      <div class="edit-row">
+        <select class="edit-select" id="cat-${item.id}">${catOptions}</select>
+        <input class="edit-input" id="price-${item.id}" value="${esc(item.price)}" placeholder="价格/预算" />
+      </div>
+      <input class="edit-input" id="notes-${item.id}" value="${esc(item.notes)}" placeholder="备注（选填）" style="width:100%;margin-bottom:10px" />
+      <div class="edit-actions">
+        <button class="btn-cancel" onclick="cancelEdit('${item.id}')">取消</button>
+        <button class="btn-save" onclick="saveEdit('${item.id}')">保存</button>
+      </div>
+    </div>`;
+}
+
+function esc(str) {
+  return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+render();
+</script>
+</body>
+</html>
